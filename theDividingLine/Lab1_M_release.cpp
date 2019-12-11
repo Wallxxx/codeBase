@@ -310,7 +310,7 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam) 
 				if (it > 999) SendMessage(StatusBar, SB_SETTEXT, 3 | SBT_NOBORDERS, (LPARAM)NoLine); // NEPROFIT(( - если нет разделяющей прямой. 
 				break;
             case IDM_ABOUT: // Кнопочка "О программе".
-				MessageBox(hWnd, TEXT("Lab1_M - релиз от 11.10.2019 (сборка 398). Реализовано на C++17\n\nУшаков М.Е. - БСБО-06-17\n"
+				MessageBox(hWnd, TEXT("Lab1_M - релиз от 11.10.2019 (сборка 398). Реализовано на C++17\n\n"
 					"Основано на: 'Геометрия машинного обучения'\n\nИсточники:\nhttps://habr.com/ru/post/324736/"
 					"\nhttps://ru.wikipedia.org/wiki/Перцептрон"),
 					TEXT("О программе"), 0);
