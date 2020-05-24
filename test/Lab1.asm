@@ -1,121 +1,79 @@
-#include <p16F690.inc> ; Файл с именами регистров. 
+#include <p16F690.inc> ;подключаем файл с именами регистров
 
-; Настройка битов конфигурации контроллера.
-    
 __config (_INTRC_OSC_NOCLKOUT & _WDT_OFF & _PWRTE_OFF & _MCLRE_OFF & _CP_OFF & _BOR_OFF & _IESO_OFF & _FCMEN_OFF)
 
-; Присвоение переменным адресов памяти.
-    
-DEST equ 0x20
-CL1 equ 0x21
+DIOD equ 0x20 ;присваиваем переменным
+CL1 equ 0x21 ;адреса памяти
 CL2 equ 0x22
-CELL equ 0x23 
-
-org 0 ; Начало обработки программы (с нулевой строки).
+    org 0 ;начало обработки программы
 
 Start
-    bsf DEST,0 ; Направление перехрда.
-    bsf STATUS,RP0 ; Банк 1 активен.
-    movlw 0xff 
-    movwf TRISA ; Порт "A" на вход.
-    clrf TRISC ; Порт "C" на выход.
-    bcf STATUS,RP0 ; Банк 2 активен.
-    bsf STATUS,RP1
-    movlw 0xf7 ; Порт "A" на 3-й цифровой пин.
-    movwf 0x1E ; Регистр уплавления цифра/аналог.
-    bcf STATUS,RP0 ; Банк 0 активен.
-    bcf STATUS,RP1 
-    movlw 0b00000000 ; Все светодиоды выключены. 
-    movwf CELL
-    movf CELL,W
+    bsf STATUS,RP0 ;банк1
+    movlw 0xFF
+    movwf TRISA ;весь ПОРТА на вход
+    clrf TRISC ;весь ПОРТС на выход
+    movlw 0x10 ;A/D - Fosc/8
+    movwf ADCON1 ;регистр управления скоростью преобразования
+    bcf STATUS,RP0 ;
+    bsf STATUS,RP1 ;банк2
+    movlw 0xF7 ;весь ПОРТА аналоговый, кроме пин3 (RA3)
+    movwf ANSEL ;регистр управления - аналог/цифра
+    bcf STATUS,RP0 ;банк0
+    bcf STATUS,RP1
+    movlw 0x01
+    movwf ADCON0 ;включаем A/D
+    movlw 0x08
+    movwf DIOD
+    
+MAIN:
+    movf DIOD,w ;вывод на св-диоды
     movwf PORTC
-    
-LOOP: 
-    btfss PORTA,3 ; Проверка нажатия кнопки.
-    goto TOUCH ; Вызывается, если кнопка нажата. 
-    goto LOOP ; Если кнопка не нажата. 
-    
-TOUCH:
-    btfss CELL, 0 ; Если все 4 диода выключены...
-    btfss CELL, 1
-    btfss CELL, 2
-    btfss CELL, 3
-    goto FIRST ; Переходим к первой функции.
-    btfsc CELL, 0 ; Если 0 и 3 диоды включены
-    btfsc CELL, 3
-    goto SECOND ; Переход ко второй функции
-    btfsc CELL, 1 ; Если первый и второй включены
-    btfsc CELL, 2
-    goto THIRD ; Переход к третьей функции
-    btfsc CELL, 0 ; Если 0 и 2 включены
-    btfsc CELL, 2
-    goto FOUR ; Переход к четвёртой функции
-    btfss CELL, 0 ; Если 0, 1 и 2 включены
-    btfss CELL, 1
-    btfss CELL, 2
-    goto SHUTDOWN ; Выключение всех
+    nop ;ожидаем 5мкс для усиления A/D и
+    nop ;зарядки конденсаторов
+    nop ;
+    nop ;
+    nop ;
+    bsf ADCON0,1 ;старт конвертации
+    btfss ADCON0,1 ;проверка бита GO, если=0 то вып след команду
+    goto $-1 ;декремент счетчика команд процессора
+    movf ADRESH,w ;конец конвертации, помещаем старший байт
+    addlw 0x01 ;прибавляем единицу к W
+    movwf CL2 ;W в переменную задержки
 
-FIRST: ; Включение 1-го и 4-го.
-    bcf STATUS,0
-    clrf STATUS
-    movlw 0b00001001
-    movwf CELL
-    movf CELL,W
-    movwf PORTC
-    goto LOOP
-    
-SECOND: ; Включение 2-го и 3-го.
-    bcf STATUS,0
-    clrf STATUS
-    movlw 0b00000110
-    movwf CELL
-    movf CELL,W
-    movwf PORTC
-    goto LOOP
-    
-THIRD: ; Включение 1-го и 3-го.
-    bcf STATUS,0
-    clrf STATUS
-    movlw 0b00000101
-    movwf CELL
-    movf CELL,W
-    movwf PORTC
-    goto LOOP
+AD_DelayLoop
+    decfsz CL1,f ;декремент CL1, если STATUS(3)=1, то пропустить
+    goto AD_DelayLoop ; The Inner loop takes 3 instr. per loop * 256 loopss = 768 instr.
+    decfsz CL2,f ; The outer loop takes and additional 3 instructions per lap * 256 loops
+    goto AD_DelayLoop ; (768+3) * 256 = 197376 instr. / 1M instr. per second = 0.197 sec.
+    movlw .13 ;еще одна задержка на 10мс
+    movwf CL2
 
-FOUR: ; Включение 1-го, 2-го и 3-го.
-    bcf STATUS,0
-    clrf STATUS
-    movlw 0b00000111
-    movwf CELL
-    movf CELL,W
-    movwf PORTC
-    goto LOOP
+TenmSdelay
+    decfsz CL1,f
+    goto TenmSdelay
+    decfsz CL2,f
+    goto TenmSdelay
 
-SHUTDOWN: ; Выключение всех.
-    bcf STATUS,0
-    clrf STATUS
-    movlw 0b00000000
-    movwf CELL
-    movf CELL,W
-    movwf PORTC
-    goto LOOP
-
+Rotate
     
-delay ; Задержка.
-    movlw 0xff
-    movf CL1,F
-loop1: 
-    decf CL1,F
-    btfsc STATUS,2
-    goto NEXT
-    movlw 0x2f
-    movf CL2,F
-loop2: 
-    decf CL2,F
-    btfsc STATUS,2
-    goto loop1
-    goto loop2
-NEXT:
-    return
+    btfss DIOD, 0 ; Если все 4 диода выключены...
+    btfss DIOD, 1
+    btfss DIOD, 2
+    btfss DIOD, 3
+    rrf DIOD, 0b00001001 ; Включаем первую комбинацию.
+    btfsc DIOD, 0 ; Если 0 и 3 диоды включены
+    btfsc DIOD, 3
+    rrf DIOD, 0b00000110 ; Включаем вторую комбинацию.
+    btfsc DIOD, 1 ; Если первый и второй включены
+    btfsc DIOD, 2
+    rrf DIOD, 0b00000101 ; Включаем третью комбинацию.
+    btfsc DIOD, 0 ; Если 0 и 2 включены
+    btfsc DIOD, 2
+    rrf DIOD, 0b00000111 ; Включаем четвёртую комбинацию.
+    btfss DIOD, 0 ; Если 0, 1 и 2 включены
+    btfss DIOD, 1
+    btfss DIOD, 2
+    rrf DIOD, 0b00000000 ; Выключаем все.
+    goto MAIN ;вернутся назад
 
 end
