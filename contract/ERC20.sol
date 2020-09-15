@@ -98,10 +98,10 @@ contract ERC20Standard
 	constructor () public
 	{
 	    totalSupply = 0;
-		name = "Contract v1.2";
+		name = "cntr";
 		decimals = 8;
-		symbol = "wal";
-		version = "1.2";
+		symbol = "nam";
+		version = "1.0";
 		owner = msg.sender; // Назначаем создателя владельцем. 
 		emit NewOwner(address(0), owner);
 	}
@@ -238,3 +238,5 @@ contract ERC20Standard
 	    selfdestruct(owner);
 	}
 }
+
+
