@@ -212,7 +212,7 @@ contract ERC20Standard
 	    emit BuyTokens(msg.sender, msg.value); // Сохраняем действие. 
 	}
 	
-	/*Вывод bcs коинов с контракта на адрес. Доступно только владельцу. */
+	/*Вывод коинов с контракта на адрес. Доступно только владельцу. */
 	
 	function withdrawal(address payable _to, uint256 _value) external 
 	{
@@ -229,7 +229,7 @@ contract ERC20Standard
 	    return address(this).balance;
 	}
 	
-	/*Закрытие контракта. Все bcs коины, которые имеются на счету контракта, переводятся 
+	/*Закрытие контракта. Все коины, которые имеются на счету контракта, переводятся 
 	  нынешнему владельцу. */
 	
 	function kill() public
