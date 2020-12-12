@@ -2,12 +2,12 @@ include "p16f84.inc"
 __config _HS_OSC & _WDT_OFF & _PWRTE_ON
 
 MAIN	
-	clrf	PORTB			    ; Отчистка порта B.
+	clrf	PORTB			; Отчистка порта B.
 	bsf 	STATUS, RP0		
 	movlw	b'11111111'		; Все линии порта B - входные.
-	movwf	TRISB			    ; Установка. 
+	movwf	TRISB			; Установка. 
 	movlw	b'11110000'		; Линии с 0-й по 3-ю порта А - выходные. 
-	movwf	TRISA 			  ; Установка. 
+	movwf	TRISA 			; Установка. 
 	bcf STATUS, RP0			; Возвращение в бланк 0. 
 	
 ; Далее - бесконечный цикл. 
