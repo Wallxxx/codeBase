@@ -35,5 +35,5 @@ LOOP
 	btfss 	PORTB, 4
 	addlw 	b'00001000'
 	movwf	PORTA 			; Передаём данные из 'w' в PORTA (включаем диоды).
-	goto LOOP 				; Возвращаемся в начало цикла. 
+	goto LOOP 			; Возвращаемся в начало цикла. 
 end
